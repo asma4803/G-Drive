@@ -1,0 +1,299 @@
+﻿
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    <link href="~/Content/Style.css" rel="stylesheet" />
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+    @RenderSection("scripts", false)
+    @RenderSection("styles", false)
+    <script>
+
+        $(document).ready(function () {
+
+            var basepath = '@Url.Content("http://localhost:60598/")';
+            $(".new").click(function () {
+                $("#id01").css("display", "block");
+            });
+            $(".newFile").click(function () {
+                $("#id02").css("display", "block");
+            });
+
+
+            $(".createBtn").click(function () {
+                var path = JSON.parse(localStorage.getItem("path"));
+                var id = path[path.length - 1];
+                debugger;
+                var fname = $(".folderName").val();
+                var userID = @Assignment8.Security.SessionManager.User.userid;
+                debugger;
+                var settings = {
+                    type: "POST",
+                    dataType: "json",
+                    url: basepath + "api/FolderAPI/saveFolder?fname=" + fname + "&id=" + id+"&userID="+userID,
+                    data: {},
+                    success: function (r) {
+                        if (r) {
+                            debugger;
+                            alert("Folder Created");
+                            $("#id01").css("display", "none");
+                            $(".newFolder").find(".nfolderName").text(fname);
+                            $(".newFolder").attr("fid", r);
+                            $(".newFolder").attr("fname", fname);
+                            $(".newFolder").css("display", "inline");
+
+                        }
+                    }
+                };
+                $.ajax(settings);
+            });
+
+            $(".UploadBtn").click(function () {
+                var filedata = new FormData();
+                var file = $(".upfile").get(0).files;
+
+                if (file.length > 0) {
+                    filedata.append("uploadedFile", file[0]);
+                }
+                var path = JSON.parse(localStorage.getItem("path"));
+                var fid= path[path.length-1];
+                var userID = @Assignment8.Security.SessionManager.User.userid;
+                filedata.append("fid", fid);
+                filedata.append("userID", userID);
+                debugger;
+                var setting = {
+                    type: "POST",
+                    contentType: false,
+                    processData:false,
+                    url: basepath + "api/FileAPI/uploadFile",
+                    data: filedata,
+                    success: function (response) {
+                        debugger;
+                        if(response == 0){
+                            alert("can't upload. Size is greater than 8MB");
+                        }
+                    else{
+                            alert("file uploaded");
+                            $("#id02").css("display", "none");
+                            debugger;
+                            var table = $(".fileTable");
+                            var newRow=$(".fileTable").find(".newFile");
+                            var namedata = $(".fileTable").find(".upfilename");
+                            var thumbdata = $(".fileTable").find(".thumb");
+                            var img = thumbdata.find(".imgthumb");
+                            img.attr("src", "http://localhost:60598/api/FileAPI/GetThumbnail?id="+response);
+                            namedata.text(file[0].name);
+                            var delBtn = newRow.find(".filedelete");
+                            delBtn.attr("fileDelID", response);
+                            var downBtn = newRow.find(".downloadBtn");
+                            downBtn.attr("dowloadID", response);
+                            newRow.css("display", "inline");
+                        }
+                    },
+                    error: function () { }
+                };
+                $.ajax(setting);
+
+            });
+
+            $(".downloadMeta").click(function () {
+                //alert("hello");
+                var pdfData = new FormData();
+                var path = JSON.parse(localStorage.getItem("path"));
+                var id = path[path.length - 1];
+                pdfData.append("id", id);
+                debugger;
+                var settings = {
+                    type: "POST",
+                    contentType: false,
+                    processData: false,
+                    url: basepath + "api/WebAPI/generatePdf",
+                    data: pdfData,
+                    success: function (response) {
+                        if (response=="") {
+                            alert("No data found");
+                        }
+                        else{
+                            var url = basepath +"docs/"+ response;
+                            window.open(url);
+                        }
+                    }
+                };
+                $.ajax(settings);
+            });
+            $(".searchBtn").click(function(){
+
+                var text = $(".searchText").val();
+               // alert(text);
+                var data = new FormData();
+                data.append("textTofind", text);
+                var settings ={
+                    type:"POST",
+                    contentType:false,
+                    processData:false,
+                    url:basepath+"api/WebAPI/FindFiles",
+                    data: data,
+                    success:function(response){
+                        debugger;
+                        if (response.length==0){
+                            var main= $(".main");
+                            main.html("");
+                            var html="<p style='text-align:center;margin:40px; font-size:40px; font-family:Comic Sans MS;'><b>No match found!</b></p>"
+                            main.append(html);
+                        }
+                        else{
+                        for(var i=0; i< response.length;i++){
+                            var main= $(".main");
+                            main.html("");
+                            var html = "<p style='display:inline; margin-top:10px; margin-right:20px;color:white; font-family:'Comic Sans MS'>"+response[i].Name+"</p><img src='http://localhost:60598/api/FileAPI/GetThumbnail?id="+response[i].Id+"' style='margin-top:10px; margin-left:20px' height='50' width='50' />";
+                            main.append(html);
+                            
+                        }
+                    }
+                    }
+                };
+                $.ajax(settings);
+            });
+        });
+
+    </script>
+    <style>
+        .sidenav {
+  
+    width: 130px;
+    position: fixed;
+    z-index: 1;
+    top: 20px;
+    overflow-x: hidden;
+    padding: 8px 0;
+    margin-top:30px;
+}
+
+.sidenav a {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none;
+    font-size: 15px;
+    color: gray;
+    display: block;
+     background: radial-gradient(circle,gray, white) fixed;
+     margin-top:2px;
+     border-radius:10px;
+}
+
+.sidenav a:hover {
+    color: black;
+}
+
+.main {
+    margin-left: 140px; /* Same width as the sidebar + left position in px */
+    padding: 0px 10px;
+}
+
+.search input[type=text] {
+    width: 130px;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: white;
+    background-image: url('searchicon.png');
+    background-position: 10px 10px; 
+    background-repeat: no-repeat;
+    margin-top:7px;
+    padding: 5px 20px 5px 40px;
+    -webkit-transition: width 0.4s ease-in-out;
+    transition: width 0.4s ease-in-out;
+}
+
+.search input[type=text]:focus {
+    width: 100%;
+}
+
+    </style>
+
+
+</head>
+<body>
+    
+    <div class="sidenav">
+        @if (Assignment8.Security.SessionManager.IsValidUser)
+        {
+           <a style="color:black; font-size:18px;font-family:'Comic Sans MS'"><b>@Assignment8.Security.SessionManager.User.name</b></a>
+          
+        }
+        
+        <a class="new" style="cursor:pointer">Create Folder</a>
+        <a class="newFile" style="cursor:pointer"> Upload File</a>
+        <a class="downloadMeta" style="cursor:pointer">Download Meta</a>
+        <a href="~/User/Logout">logout</a>
+    </div>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+               <b><a href="~/Home/Home" style="font-family:'Comic Sans MS';font-size:20px; color:white;" class="navbar-brand"> Drive</a></b> 
+            </div>
+            <div class="navbar-collapse collapse">
+                
+                   <ul class="nav navbar-nav" style="float:right; font-family:'Comic Sans MS'">
+                      <li class="search"><input type="text" class="searchText" placeholder="Search..."/><button class="searchBtn"><img src="~/images/search.png" width="30" height="30"/></button></li>
+                       <li>@Html.ActionLink("Home", "Home", "Home")</li>
+                       <li>@Html.ActionLink("About", "About", "Home")</li>
+                       <li>@Html.ActionLink("Contact", "Contact", "Home")</li>
+                    </ul>
+                   
+            </div>
+        </div>
+    </div>
+    <div class="main"> 
+       
+        @RenderBody()
+        <div class="abc newFolder" style="display:none">
+            <img src="~/images/folder.png" width="50" height="50" />
+            <p class="nfolderName"></p>
+        </div>
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - Drive</p>
+        </footer>
+    </div>
+<div class="overlay"></div>
+    <div id="id01" class="modal" >  
+        <form class="modal-content" style="width:200px;padding-bottom:10px; background: linear-gradient(to right,white, lightgray);">
+            <span onclick="document.getElementById('id01').style.display='none'" style="color:black;margin-left:180px" class="close" title="Close Modal">&times;</span><br />
+            <table align="center">
+                <tr><td><label>Folder Name: </label></td></tr>
+                <tr><td><input type="text" class="folderName" name="folderName" id="folderName"/></td></tr>
+            </table>   
+            <hr />
+            <div style="margin-right:60px; text-align:right">
+                <input type="button" class="createBtn  btn btn-default" value="Create" />
+            </div>
+        </form>
+    </div>
+
+    <div id="id02" class="modal">
+        <form class="modal-content" style="width:300px;padding-bottom:10px; background: linear-gradient(to right,white, lightgray);">
+            <span onclick="document.getElementById('id02').style.display='none'" style="color:black;margin-left:180px;padding-bottom:20px" class="close" title="Close Modal">&times;</span><br /><br />
+            <table align="center">
+                <tr><td><input type="file" id="upfile" class="upfile" name="upfile" /></td></tr>
+            </table>
+            <hr />
+            <div style="margin-right:120px; text-align:right">
+                <input type="button" class="UploadBtn  btn btn-default" value="Upload" />
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

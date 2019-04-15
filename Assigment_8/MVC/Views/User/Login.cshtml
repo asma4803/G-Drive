@@ -1,0 +1,56 @@
+﻿
+@{
+    ViewBag.Title = "Login";
+}
+
+
+@{
+    ViewBag.Title = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+
+
+@section styles{
+    <style>
+        .myStyle {
+            border: outset;
+            width: 350px;
+            height: 500px;
+            padding: 20px;
+            margin-left: 400px;
+            margin-right: 300px;
+            margin-top: 40px;
+            margin-bottom: 30px;
+            background: linear-gradient(to top, grey, white);
+        }
+    </style>
+
+}
+
+<div class="myStyle">
+    <img src="~/images/login1.png" width="80" height="80" style="margin-left:110px" />
+    <form method="post" action="~/User/Login" style="width:200px">
+        <br />
+        <br />
+
+        <table cellpadding="2" cellspacing="2">
+            <tr>
+                <td>Login:</td>
+                <td><input type="text" name="login" id="login" value="@ViewBag.username" required></td>
+            </tr>
+
+            <tr>
+                <td>Password:</td>
+                <td><input type="password" name="password" id="password" required></td>
+            </tr>
+
+            <tr><td></td><td><input class="login btn btn-default" style="width:201px" type="submit" value="Login"></td></tr>
+        </table>
+        @if (ViewBag != null)
+            {
+            <p style="padding-left:70px; color:deeppink">@ViewBag.myError</p>
+        }
+    </form>
+</div>

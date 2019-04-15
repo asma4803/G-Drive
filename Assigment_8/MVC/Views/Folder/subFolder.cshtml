@@ -1,0 +1,213 @@
+﻿@using Entities;
+@model dynamic
+    
+@{
+    ViewBag.Title = "subFolder";
+    Layout = "~/Views/Shared/_DriveLayout.cshtml";
+}
+@section styles{
+    <style>
+        .deleteBtn {
+            display: inline;
+            text-align: center;
+            background: linear-gradient(to left, white, gray);
+            border-radius: 10px;
+        }
+
+            .deleteBtn:hover {
+                background: white;
+            }
+            #customers {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#customers td, #customers th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#customers tr:nth-child(even){background-color: #f2f2f2;}
+
+#customers tr:hover {background-color: #ddd;}
+
+#customers th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color:Gray;
+    color: white;
+}
+    </style>
+}
+@section scripts{
+    <script>
+
+        $(document).ready(function () {
+            var pathListIDs = JSON.parse(localStorage.getItem("path"));
+            debugger;
+            var pathListNames = JSON.parse(localStorage.getItem("fnamePaths"));
+            for (var i = 0; i < pathListIDs.length && i < pathListNames.length ; i++) {
+                var para = $("<p>");
+                para.text(pathListNames[i]+" >");
+                para.attr("fid", pathListIDs[i]);
+                para.css("cursor", "pointer");
+                para.css("display", "inline");
+                para.css("margin", "5px");
+                para.css("font-size", "14px");
+                para.bind("click",function () {
+                    var id = $(this).attr("fid");
+                    if (id == 0) {
+                        window.location.href = "/Home/Home";
+                    }
+                    else {
+                        window.location.href = "/Folder/subFolder?fid=" + id;
+                    }
+                });
+                $(".navigation").append(para);
+            }
+            var basepath = '@Url.Content("http://localhost:60598/")';
+            var timer = 0;
+            var delay = 200;
+            var prevent = false;
+            $(".abc")
+              .on("click", function () {
+                  var abc = $(this);
+                  timer = setTimeout(function () {
+                      if (!prevent) {
+                          //alert("clicked");
+                          var folderID = abc.attr("fid");
+                          debugger;
+                          abc.find(".delete").css("display", "block");
+                          var deleteBtn = abc.find(".deleteBtn");
+                          deleteBtn.bind("click", function () {
+                              var con = confirm("Do you want to delete this?");
+                              if (con) {
+                                  var delID = deleteBtn.attr("delID");
+                                  abc.remove();
+                                  var settings = {
+                                      type: "POST",
+                                      dataType: "json",
+                                      url:basepath + "api/FolderAPI/remove?id="+delID,
+                                      data: { },
+                                      success: function (response) {
+                                          if (response == 1) {
+                                              alert("delete successfully!");
+                                          }
+                                      }
+                                  };
+                                  $.ajax(settings);
+                              }
+                              debugger;
+                          });
+                      }
+                      prevent = false;
+                  }, delay);
+              })
+              .on("dblclick", function () {
+                  clearTimeout(timer);
+                  prevent = true;
+                 // alert("ok");
+                  var folderID = $(this).attr("fid");
+                  var folderName = $(this).attr("fname");
+                  var path = JSON.parse(localStorage.getItem("path"));
+                  path[path.length] = folderID;
+                  localStorage.setItem("path", JSON.stringify(path));
+
+                  var fnamePaths = JSON.parse(localStorage.getItem("fnamePaths"));
+                  fnamePaths[fnamePaths.length] = folderName;
+                  localStorage.setItem("fnamePaths",JSON.stringify (fnamePaths));
+                  //debugger;
+                  window.location.href = "/Folder/subFolder?fid=" + folderID;
+              });
+
+            $(".downloadBtn").click(function () {
+                var val = $(this).attr("dowloadID");
+                var url = basepath + "api/FileAPI/DownloadFile?id=" + val;
+                window.open(url);
+            });
+
+            $(".filedelete").click(function () {
+                var id = $(this).attr("fileDelID");
+                debugger;
+                var con = confirm("Do you want to delete this?");
+                if (con) {
+                    $(this).closest("tr").remove();
+                    var settings = {
+                        type: "POST",
+                        dataType: "json",
+                        url: basepath + "api/FileAPI/removeFile?id=" + id,
+                        data: {},
+                        success: function (response) {
+                            if (response == 1) {
+                                alert("delete successfully!");
+                            }
+                        }
+                    };
+                    $.ajax(settings);
+                }
+                debugger;
+            });
+            $(".back").click(function () {
+                var path = JSON.parse(localStorage.getItem("path"));
+                path.length = path.length - 1;
+                localStorage.setItem('path',JSON.stringify( path));
+                debugger;
+                history.go(-1);
+            });
+
+        });
+    </script>
+}
+<br />
+<button  class="back btn btn-default"><b><</b></button>
+<div class="navigation" style="display:inline; border-color:#cccccc; background-color:transparent; font-family:'Comic Sans MS'; border-radius:5px; height:40px">
+</div>
+@{
+    <div class="main1 row" style="margin-top:20px">
+        @for (int i = 0; i < Model.folderlist.Count; i++)
+        {
+            <div class="abc col-md-3" style="background:linear-gradient(to bottom, white, lightgray) ; margin:20px;border-radius:5px; width:100px" fid="@Model.folderlist[i].folderID" fname="@Model.folderlist[i].name">
+                <div class="delete" style="display:none">
+                    <button class="deleteBtn" delID="@Model.folderlist[i].folderID">delete</button>
+                </div>
+                <img src="~/images/folder.png" height="50" width="50" />
+                <p class="fname">
+                    @Model.folderlist[i].name
+                </p>
+            </div>
+        }
+    </div>
+
+    if (Model.filelist.Count != 0)
+    {
+        <table id="customers" cellpadding="2" cellspacing="4" style="width:100%">
+            <tr>
+                <th>Name</th>
+                <th>Preview</th>
+                <th >Delete</th>
+                <th>Download</th>
+            </tr>
+            @for (int i = 0; i < Model.filelist.Count; i++)
+            {
+                var id = Model.filelist[i].Id;
+                <tr>
+                    <td><p class="fname">@Model.filelist[i].Name</p></td>
+                    <td><img src='http://localhost:60598/api/FileAPI/GetThumbnail?id=@id' height="50" width="50" /></td>
+                    <td >
+                        <div class="filedownload">
+                            <button class="filedelete deleteBtn" fileDelID="@id">delete</button>
+                        </div>
+                    </td>
+                    <td >
+                        <div class="download">
+                            <button class="downloadBtn deleteBtn" dowloadID="@id">Download</button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </table>
+    }
+
+}
